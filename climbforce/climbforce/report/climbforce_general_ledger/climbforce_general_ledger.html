@@ -1,0 +1,164 @@
+<div style="margin-bottom: 7px;" class="text-center">
+	{%= frappe.boot.letter_heads[filters.letter_head || frappe.get_doc(":Company", filters.company).default_letter_head || frappe.defaults.get_default("letter_head")] %}
+</div>
+<h2 class="text-center">{%= __("Statement of Account") %}</h2>
+<h4 class="text-center">{%= (filters.party || filters.account) && ((filters.party || filters.account) + ", ")  || "" %} {%= filters.company %}</h4>
+<h5 class="text-center">
+	{%= dateutil.str_to_user(filters.from_date) %}
+	{%= __("to") %}
+	{%= dateutil.str_to_user(filters.to_date) %}
+</h5>
+<hr>
+
+<!-- LOOKUP CUSTOMER INFO -->
+
+{% for(var i=0, l=data.length; i<l; i++) { %}
+{% if(data[i][__("**CUSTOMER INFO**")] == "br") { %}
+{% var customer_name = data[i][__("#Customer Name")] %}
+{% var customer_address = data[i][__("#Customer Address")] %}
+{% var date_now = data[i][__("#Date")] %}
+{% var currency = data[i][__("#Currency")] %}
+{% } %}
+{% } %}
+
+
+<!--<div><h1>STATEMENT OF ACCOUNT</h1></div>-->
+
+<table width="100%">
+	<tr>
+		<td width="75%">
+<table border="0" width="100%">
+<tr>
+
+	</tr>
+
+	<tr>
+		<td width="25%"><b>Customer Name</b></td>
+		<td width="75%">{%=customer_name %}</td>
+		<!--<td width="10%">Date</td>
+		<td width="10%">123</td>-->
+	</tr>
+
+	<tr>
+		<td rowspan="2"><b>Address</b></td>
+		<td rowspan="2">{%=customer_address %}</td>
+		<!--<td>Term</td>
+		<td>TT N Days</td>-->
+	</tr>
+	<tr>
+		<!--<td>Currency</td>
+		<td>USD</td>-->
+	</tr>
+	</table>
+</td>
+		<td width="25%">
+<table border="0" width="100%">
+<tr>
+
+	</tr>
+
+	<tr>
+		<td width="50%"><b>Date</b></td>
+		<td width="50%">{%=date_now %}</td>
+	</tr>
+
+	<tr>
+		<td><b>Term</b></td>
+		<td>TT N Days</td>
+	</tr>
+	<tr>
+		<td><b>Currency</b></td>
+		<td>{%=currency %}</td>
+	</tr>
+	</table>
+	</td>
+	</tr>
+</table>
+
+<table class="table table-bordered">
+	<thead>
+		<tr>
+			<th style="width: 15%">{%= __("Date") %}</th>
+			<th style="width: 15%">{%= __("Ref") %}</th>
+			<th style="width: 40%">{%= __("Party") %}</th>
+			<th style="width: 15%">{%= __("Debit") %}</th>
+			<th style="width: 15%">{%= __("Credit") %}</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for(var i=0, l=data.length; i<l; i++) { %}
+			<tr>
+			{% if(data[i][__("Posting Date")]) { %}
+				<td>{%= dateutil.str_to_user(data[i][__("Posting Date")]) %}</td>
+				<td>{%= data[i][__("Voucher Type")] %}
+					<br>{%= data[i][__("Voucher No")] %}</td>
+				<td>
+					{% if(!(filters.party || filters.account)) { %}
+						{%= data[i][__("Party")] || data[i][__("Account")] %}
+						<br>
+					{% } %}
+
+					{{ __("Against") }}: {%= data[i][__("Against Account")] %}
+					<br>{%= __("Remarks") %}: {%= data[i][__("Remarks")] %}</td>
+				<td style="text-align: right">{%= format_currency(data[i][__("Debit")],currency) %}</td>
+				<td style="text-align: right">{%= format_currency(data[i][__("Credit")],currency) %}</td>
+			{% } else { %}
+				<td></td>
+				<td></td>
+				<td><b>{%= frappe.format(data[i][__("Account")], {fieldtype: "Link"}) || "&nbsp;" %}</b></td>
+				<td style="text-align: right">
+					{%= data[i][__("Account")] && format_currency(data[i][__("Debit")],currency) %}</td>
+				<td style="text-align: right">
+					{%= data[i][__("Account")] && format_currency(data[i][__("Credit")],currency) %}</td>
+			{% } %}
+			</tr>
+		{% } %}
+	</tbody>
+</table>
+
+<table class="table table-bordered" width="100%">
+{% var count = 0 %}
+{% for(var i=0, l=data.length; i<l; i++) { %}
+{% if(data[i][__("**BREAK**")] == "br") { %}
+	{% if (count==0) %}
+	{% count += 1 %}
+	<tr>
+		<th>Age (Days)</th>
+	</tr>
+	<tr>
+		<th>
+			0-30
+		</th>
+		<th>
+			31-60
+		</th>
+		<th>
+			61-90
+		</th>
+		<th>
+			91-Above
+		</th>
+	</tr>
+	{% } %}
+<tr>
+	<td>
+		{%= format_currency(data[i][__("0-30**")],currency) %}
+	</td>
+	<td>
+		{%= format_currency(data[i][__("31-60**")],currency) %}
+	</td>
+	<td>
+		{%= format_currency(data[i][__("61-90**")],currency) %}
+	</td>
+	<td>
+		{%= format_currency(data[i][__("91-Above**")],currency) %}
+	</td>
+</tr>
+
+{% } %}
+{% } %}
+
+</table>
+
+
+<p class="text-right text-muted">Printed On {%= dateutil.str_to_user(dateutil.get_datetime_as_string()) %}</p>
