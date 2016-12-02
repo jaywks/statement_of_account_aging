@@ -1,0 +1,18 @@
+include MANIFEST.in
+include requirements.txt
+include *.json
+include *.md
+include *.py
+include *.txt
+recursive-include climbforce *.css
+recursive-include climbforce *.csv
+recursive-include climbforce *.html
+recursive-include climbforce *.ico
+recursive-include climbforce *.js
+recursive-include climbforce *.json
+recursive-include climbforce *.md
+recursive-include climbforce *.png
+recursive-include climbforce *.py
+recursive-include climbforce *.svg
+recursive-include climbforce *.txt
+recursive-exclude climbforce *.pyc
