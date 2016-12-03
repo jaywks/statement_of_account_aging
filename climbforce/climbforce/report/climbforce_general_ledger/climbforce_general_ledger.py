@@ -6,6 +6,7 @@ import frappe
 from frappe.utils import flt, getdate, cstr
 from frappe import _
 from erpnext.accounts.utils import get_account_currency
+from datetime import datetime
 
 # from erpnext.accounts.report.accounts_receivable.accounts_receivable import ReceivablePayableReport
 from climbforce.climbforce.report.climbforce_accounts_receivable.climbforce_accounts_receivable import ReceivablePayableReport
@@ -72,6 +73,13 @@ def execute(filters=None):
                                  filters.get("party"))
     print "CUSTOMER SQL"
     print customer_sql
+
+    # customer_row.append(frappe.utils.nowdate())  # #DATE
+    #dt = frappe.utils.nowdate()
+    dt = datetime.strptime(frappe.utils.nowdate(), '%Y-%m-%d').strftime('%d-%m-%Y')
+    # print '{0}/{1}/{2:02}'.format(dt.month, dt.day, dt.year % 100)
+    #customer_row.append(dt)
+
     if customer_sql:
 
         customer_row.append("br")
@@ -105,7 +113,7 @@ def execute(filters=None):
                             address_doc.city + "<br>" + address_doc.country + "<br>" + "Phone: " + address_doc.phone +
                             "<br>" + "Fax: " + address_doc.fax)
 
-        customer_row.append(frappe.utils.nowdate())  # #DATE
+        customer_row.append(dt)  # #DATE
 
         # customer_row.append(filters.get("currency")) # #CURRENCY
         customer_row.append(frappe.db.get_value("Customer", filters.party, "default_currency"))
@@ -113,7 +121,7 @@ def execute(filters=None):
         if filters.get("party"):
             customer_doc = frappe.get_doc("Customer",filters.party)
             if customer_doc.credit_days_based_on == "Fixed Days":
-                customer_row.append("TT " + str(customer_doc.credit_days) + " Days")
+                customer_row.append(str(customer_doc.credit_days) + " Days")
             else:
                 customer_row.append(customer_doc.credit_days_based_on)
         else:
@@ -124,34 +132,11 @@ def execute(filters=None):
         if filters.get("party"):
             customer_row.append("br")
 
-            #address_doc = frappe.get_doc("Address", customer_sql[0][0])
-
             customer_row.append(filters.get("party"))  # #Customer Name
-            # customer_row.append(customer_doc.address)
-
-            customer_full_address = ""
-
-            """if address_doc.address_line1:
-                customer_full_address += address_doc.address_line1 + "<br>"
-
-            if address_doc.address_line2:
-                customer_full_address += address_doc.address_line2 + "<br>"
-
-            if not address_doc.city:
-                address_doc.city = " "
-
-            if not address_doc.country:
-                address_doc.country = " "
-
-            if not address_doc.phone:
-                address_doc.phone = " "
-
-            if not address_doc.fax:
-                address_doc.fax = " """
 
             customer_row.append("")
 
-            customer_row.append(frappe.utils.nowdate())  # #DATE
+            customer_row.append(dt)
 
             # customer_row.append(filters.get("currency")) # #CURRENCY
             customer_row.append(frappe.db.get_value("Customer", filters.party, "default_currency"))
