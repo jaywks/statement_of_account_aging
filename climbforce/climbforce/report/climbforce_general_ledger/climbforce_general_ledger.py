@@ -111,7 +111,15 @@ def execute(filters=None):
         customer_data.append(customer_row)  # ADD ROW TO BE RETURNED
     else:
         if filters.get("party"):
-            frappe.throw("Customer has no address.")
+            #frappe.throw("Customer has no address.")
+            customer_row.append("")
+
+            customer_row.append(frappe.utils.nowdate())  # #DATE
+
+            # customer_row.append(filters.get("currency")) # #CURRENCY
+            customer_row.append(frappe.db.get_value("Customer", filters.party, "default_currency"))
+
+            customer_data.append(customer_row)  # ADD ROW TO BE RETURNED
 
     data_combine = res + res2 + customer_data
     # data_combine = res + customer_data
