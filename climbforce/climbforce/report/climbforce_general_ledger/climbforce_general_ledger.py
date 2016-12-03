@@ -245,13 +245,23 @@ def get_gl_entries(filters):
         account_currency = frappe.db.get_value(filters.party_type, filters.party, "default_currency")
 
         #GET CURRENCY CONVERSION
-        exchange_sql = frappe.db.sql("""SELECT exchange_rate FROM `tabCurrency Exchange`
-                WHERE to_currency='{0}' AND from_currency='{1}'""".format(company_currency,account_currency))
-        print "CURRENCY EXCHANGE SQL"
+        #exchange_sql = frappe.db.sql("""SELECT exchange_rate FROM `tabCurrency Exchange`
+        #        WHERE to_currency='{0}' AND from_currency='{1}'""".format(company_currency,account_currency))
+        """print "CURRENCY EXCHANGE SQL"
         print exchange_sql
         if exchange_sql:
             entry['debit'] = entry['debit']/exchange_sql[0][0]
-            entry['credit'] = entry['credit'] / exchange_sql[0][0]
+            entry['credit'] = entry['credit'] / exchange_sql[0][0]"""
+
+        if entry['voucher_type'] == 'Sales Invoice':
+            sales_invoice_doc = frappe.get_doc("Sales Invoice",entry['voucher_no'])
+            entry['debit'] = sales_invoice_doc.grand_total
+            entry['credit'] = sales_invoice_doc.grand_total
+        elif entry['voucher_type'] == 'Payment Entry':
+            sales_invoice_doc = frappe.get_doc("Payment Entry", entry['voucher_no'])
+            entry['debit'] = sales_invoice_doc.grand_total
+            entry['credit'] = sales_invoice_doc.grand_total
+
     return gl_entries
 
 
