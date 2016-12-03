@@ -257,10 +257,12 @@ class ReceivablePayableReport(object):
         if not hasattr(self, "gl_entries"):
             conditions, values = self.prepare_conditions(party_type)
 
-            #select_fields = "sum(debit) as debit, sum(credit) as credit"
+            #select_fields = "sum(debit_in_account_currency) as debit," \
+            #                "sum(credit_in_account_currency) as credit"
 
-            select_fields = "sum(debit_in_account_currency) as debit," \
-                            "sum(credit_in_account_currency) as credit"
+            select_fields = """sum(debit_in_account_currency) as debit,
+            	sum(credit_in_account_currency) as credit""" \
+                if self.filters.get("show_in_account_currency") else """sum(debit) as debit, sum(credit) as credit"""
 
             self.gl_entries = frappe.db.sql("""select name, posting_date, account, party_type, party,
 				voucher_type, voucher_no, against_voucher_type, against_voucher,
@@ -271,23 +273,6 @@ class ReceivablePayableReport(object):
 				group by voucher_type, voucher_no, against_voucher_type, against_voucher, party
 				order by posting_date, party"""
                                             .format(select_fields, self.filters.get("party"),conditions), values, as_dict=True)
-
-            """for entry in self.gl_entries:
-                print "INDIVIDUAL ENTRIES"
-                print entry
-
-                if entry['voucher_type'] == 'Sales Invoice':
-                    sales_invoice_doc = frappe.get_doc("Sales Invoice", entry['voucher_no'])
-                    if entry['debit'] > 0:
-                        entry['debit'] = sales_invoice_doc.grand_total
-                    if entry['credit'] > 0:
-                        entry['credit'] = sales_invoice_doc.grand_total
-                elif entry['voucher_type'] == 'Payment Entry':
-                    sales_invoice_doc = frappe.get_doc("Payment Entry", entry['voucher_no'])
-                    if entry['debit'] > 0:
-                        entry['debit'] = sales_invoice_doc.total_allocated_amount
-                    if entry['credit'] > 0:
-                        entry['credit'] = sales_invoice_doc.total_allocated_amount"""
 
         return self.gl_entries
 

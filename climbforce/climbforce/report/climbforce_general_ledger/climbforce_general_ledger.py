@@ -159,7 +159,7 @@ def execute(filters=None):
             if filters.get("party"):
                 customer_doc = frappe.get_doc("Customer", filters.party)
                 if customer_doc.credit_days_based_on == "Fixed Days":
-                    customer_row.append("TT " + str(customer_doc.credit_days) + " Days")
+                    customer_row.append(str(customer_doc.credit_days) + " Days")
                 else:
                     customer_row.append(customer_doc.credit_days_based_on)
             else:
@@ -230,18 +230,18 @@ def set_account_currency(filters):
 def get_columns(filters):
     columns = [
         _("Posting Date") + ":Date:90", _("Account") + ":Link/Account:200",
-       # _("Debit") + ":Float:100", _("Credit") + ":Float:100"
+       _("Debit") + ":Float:100", _("Credit") + ":Float:100"
     ]
     #columns = []
 
     print "GET COLUMNS"
     print filters
 
-    if filters.get("show_in_account_currency"):
+    """if filters.get("show_in_account_currency"):
         columns += [
             _("Debit") + ":Float:100",
             _("Credit") + ":Float:100"
-        ]
+        ]"""
 
     columns += [
         _("Voucher Type") + "::120", _("Voucher No") + ":Dynamic Link/" + _("Voucher Type") + ":160",
@@ -266,9 +266,9 @@ def get_result(filters, account_details):
 
 
 def get_gl_entries(filters):
-    select_fields = """, sum(debit_in_account_currency) as debit_in_account_currency,
+    select_fields = """sum(debit_in_account_currency) as debit_in_account_currency,
     	sum(credit_in_account_currency) as credit_in_account_currency""" \
-        if filters.get("show_in_account_currency") else ""
+        if filters.get("show_in_account_currency") else """sum(debit) as debit, sum(credit) as credit"""
 
     group_by_condition = "group by voucher_type, voucher_no, account, cost_center" \
         if filters.get("group_by_voucher") else "group by name"
@@ -276,32 +276,16 @@ def get_gl_entries(filters):
     gl_entries = frappe.db.sql("""
     	select
     		posting_date, account, party_type, party,
-    		sum(debit) as debit, sum(credit) as credit,
+    		{select_fields},
     		voucher_type, voucher_no, cost_center, project,
     		against_voucher_type, against_voucher,
-    		remarks, against, is_opening {select_fields}
+    		remarks, against, is_opening
     	from `tabGL Entry`
     	where company=%(company)s {conditions}
     	{group_by_condition}
     	order by posting_date, account""" \
                                .format(select_fields=select_fields, conditions=get_conditions(filters),
                                        group_by_condition=group_by_condition), filters, as_dict=1)
-    """for entry in gl_entries:
-        print "INDIVIDUAL ENTRIES"
-        print entry
-
-        if entry['voucher_type'] == 'Sales Invoice':
-            sales_invoice_doc = frappe.get_doc("Sales Invoice",entry['voucher_no'])
-            if entry['debit'] > 0:
-                entry['debit'] = sales_invoice_doc.grand_total
-            if entry['credit'] > 0:
-                entry['credit'] = sales_invoice_doc.grand_total
-        elif entry['voucher_type'] == 'Payment Entry':
-            sales_invoice_doc = frappe.get_doc("Payment Entry", entry['voucher_no'])
-            if entry['debit'] > 0:
-                entry['debit'] = sales_invoice_doc.total_allocated_amount
-            if entry['credit'] > 0:
-                entry['credit'] = sales_invoice_doc.total_allocated_amount"""
 
     return gl_entries
 
@@ -472,6 +456,8 @@ def get_result_as_list(data, filters):
 
         if filters.get("show_in_account_currency"):
             row += [d.get("debit_in_account_currency"), d.get("credit_in_account_currency")]
+        else:
+            row += [d.get("debit"), d.get("credit")]
 
         row += [d.get("voucher_type"), d.get("voucher_no"), d.get("against"),
                 d.get("party_type"), d.get("party"), d.get("project"), d.get("cost_center"),
