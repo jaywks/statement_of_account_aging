@@ -179,11 +179,11 @@ def get_columns(filters):
         _("Debit") + ":Float:100", _("Credit") + ":Float:100"
     ]
 
-    if filters.get("show_in_account_currency"):
+    """if filters.get("show_in_account_currency"):
         columns += [
             _("Debit") + " (" + filters.account_currency + ")" + ":Float:100",
             _("Credit") + " (" + filters.account_currency + ")" + ":Float:100"
-        ]
+        ]"""
 
     columns += [
         _("Voucher Type") + "::120", _("Voucher No") + ":Dynamic Link/" + _("Voucher Type") + ":160",
