@@ -272,6 +272,22 @@ class ReceivablePayableReport(object):
 				order by posting_date, party"""
                                             .format(select_fields, self.filters.get("party"),conditions), values, as_dict=True)
 
+            for entry in self.gl_entries:
+                print "INDIVIDUAL ENTRIES"
+                print entry
+
+                company_currency = frappe.db.get_value("Company", self.filters.company, "default_currency")
+                account_currency = frappe.db.get_value(self.filters.party_type, self.filters.party, "default_currency")
+
+                # GET CURRENCY CONVERSION
+                exchange_sql = frappe.db.sql("""SELECT exchange_rate FROM `tabCurrency Exchange`
+                        WHERE to_currency='{0}' AND from_currency='{1}'""".format(company_currency, account_currency))
+                print "CURRENCY EXCHANGE SQL"
+                print exchange_sql
+                if exchange_sql:
+                    entry['debit'] = entry['debit'] / exchange_sql[0][0]
+                    entry['credit'] = entry['credit'] / exchange_sql[0][0]
+
         return self.gl_entries
 
     def prepare_conditions(self, party_type):

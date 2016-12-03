@@ -237,7 +237,21 @@ def get_gl_entries(filters):
     	order by posting_date, account""" \
                                .format(select_fields=select_fields, conditions=get_conditions(filters),
                                        group_by_condition=group_by_condition), filters, as_dict=1)
+    for entry in gl_entries:
+        print "INDIVIDUAL ENTRIES"
+        print entry
 
+        company_currency = frappe.db.get_value("Company", filters.company, "default_currency")
+        account_currency = frappe.db.get_value(filters.party_type, filters.party, "default_currency")
+
+        #GET CURRENCY CONVERSION
+        exchange_sql = frappe.db.sql("""SELECT exchange_rate FROM `tabCurrency Exchange`
+                WHERE to_currency='{0}' AND from_currency='{1}'""".format(company_currency,account_currency))
+        print "CURRENCY EXCHANGE SQL"
+        print exchange_sql
+        if exchange_sql:
+            entry['debit'] = entry['debit']/exchange_sql[0][0]
+            entry['credit'] = entry['credit'] / exchange_sql[0][0]
     return gl_entries
 
 
