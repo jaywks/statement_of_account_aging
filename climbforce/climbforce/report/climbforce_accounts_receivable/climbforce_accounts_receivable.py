@@ -257,10 +257,10 @@ class ReceivablePayableReport(object):
         if not hasattr(self, "gl_entries"):
             conditions, values = self.prepare_conditions(party_type)
 
-            #if self.filters.get(scrub(party_type)):
-            #    select_fields = "sum(debit_in_account_currency) as debit, sum(credit_in_account_currency) as credit"
-            #else:
-            select_fields = "sum(debit) as debit, sum(credit) as credit"
+            #select_fields = "sum(debit) as debit, sum(credit) as credit"
+
+            select_fields = "sum(debit_in_account_currency) as debit," \
+                            "sum(credit_in_account_currency) as credit"
 
             self.gl_entries = frappe.db.sql("""select name, posting_date, account, party_type, party,
 				voucher_type, voucher_no, against_voucher_type, against_voucher,
@@ -272,30 +272,22 @@ class ReceivablePayableReport(object):
 				order by posting_date, party"""
                                             .format(select_fields, self.filters.get("party"),conditions), values, as_dict=True)
 
-            for entry in self.gl_entries:
+            """for entry in self.gl_entries:
                 print "INDIVIDUAL ENTRIES"
                 print entry
 
-                company_currency = frappe.db.get_value("Company", self.filters.company, "default_currency")
-                account_currency = frappe.db.get_value(self.filters.party_type, self.filters.party, "default_currency")
-
-                # GET CURRENCY CONVERSION
-                #exchange_sql = frappe.db.sql("""SELECT exchange_rate FROM `tabCurrency Exchange`
-                #        WHERE to_currency='{0}' AND from_currency='{1}'""".format(company_currency, account_currency))
-                """print "CURRENCY EXCHANGE SQL"
-                print exchange_sql
-                if exchange_sql:
-                    entry['debit'] = entry['debit'] / exchange_sql[0][0]
-                    entry['credit'] = entry['credit'] / exchange_sql[0][0]"""
-
                 if entry['voucher_type'] == 'Sales Invoice':
                     sales_invoice_doc = frappe.get_doc("Sales Invoice", entry['voucher_no'])
-                    entry['debit'] = sales_invoice_doc.grand_total
-                    entry['credit'] = sales_invoice_doc.grand_total
+                    if entry['debit'] > 0:
+                        entry['debit'] = sales_invoice_doc.grand_total
+                    if entry['credit'] > 0:
+                        entry['credit'] = sales_invoice_doc.grand_total
                 elif entry['voucher_type'] == 'Payment Entry':
                     sales_invoice_doc = frappe.get_doc("Payment Entry", entry['voucher_no'])
-                    entry['debit'] = sales_invoice_doc.total_allocated_amount
-                    entry['credit'] = sales_invoice_doc.total_allocated_amount
+                    if entry['debit'] > 0:
+                        entry['debit'] = sales_invoice_doc.total_allocated_amount
+                    if entry['credit'] > 0:
+                        entry['credit'] = sales_invoice_doc.total_allocated_amount"""
 
         return self.gl_entries
 

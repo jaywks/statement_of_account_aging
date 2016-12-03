@@ -18,6 +18,7 @@
 {% var customer_address = data[i][__("#Customer Address")] %}
 {% var date_now = data[i][__("#Date")] %}
 {% var currency = data[i][__("#Currency")] %}
+{% var credit_days = data[i][__("#Credit Days Based On")] %}
 {% } %}
 {% } %}
 
@@ -64,7 +65,7 @@
 
 	<tr>
 		<td><b>Term</b></td>
-		<td>TT N Days</td>
+		<td>{%=credit_days %}</td>
 	</tr>
 	<tr>
 		<td><b>Currency</b></td>

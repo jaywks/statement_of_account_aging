@@ -55,7 +55,8 @@ def execute(filters=None):
         _("#Customer Name") + ":Data",
         _("#Customer Address") + ":Short Text",
         _("#Date") + ":Data",
-        _("#Currency") + ":Data"
+        _("#Currency") + ":Data",
+        _("#Credit Days Based On") + ":Data"
     ]
     columns_combine += customer_columns
 
@@ -69,6 +70,7 @@ def execute(filters=None):
 
     customer_sql = frappe.db.sql("""SELECT name FROM `tabAddress` WHERE customer_name=%s LIMIT 1""",
                                  filters.get("party"))
+    print "CUSTOMER SQL"
     print customer_sql
     if customer_sql:
 
@@ -108,16 +110,60 @@ def execute(filters=None):
         # customer_row.append(filters.get("currency")) # #CURRENCY
         customer_row.append(frappe.db.get_value("Customer", filters.party, "default_currency"))
 
+        if filters.get("party"):
+            customer_doc = frappe.get_doc("Customer",filters.party)
+            if customer_doc.credit_days_based_on == "Fixed Days":
+                customer_row.append("TT " + str(customer_doc.credit_days) + " Days")
+            else:
+                customer_row.append(customer_doc.credit_days_based_on)
+        else:
+            customer_row.append("")
+
         customer_data.append(customer_row)  # ADD ROW TO BE RETURNED
     else:
         if filters.get("party"):
-            #frappe.throw("Customer has no address.")
+            customer_row.append("br")
+
+            #address_doc = frappe.get_doc("Address", customer_sql[0][0])
+
+            customer_row.append(filters.get("party"))  # #Customer Name
+            # customer_row.append(customer_doc.address)
+
+            customer_full_address = ""
+
+            """if address_doc.address_line1:
+                customer_full_address += address_doc.address_line1 + "<br>"
+
+            if address_doc.address_line2:
+                customer_full_address += address_doc.address_line2 + "<br>"
+
+            if not address_doc.city:
+                address_doc.city = " "
+
+            if not address_doc.country:
+                address_doc.country = " "
+
+            if not address_doc.phone:
+                address_doc.phone = " "
+
+            if not address_doc.fax:
+                address_doc.fax = " """
+
             customer_row.append("")
 
             customer_row.append(frappe.utils.nowdate())  # #DATE
 
             # customer_row.append(filters.get("currency")) # #CURRENCY
             customer_row.append(frappe.db.get_value("Customer", filters.party, "default_currency"))
+
+            if filters.get("party"):
+                customer_doc = frappe.get_doc("Customer", filters.party)
+                if customer_doc.credit_days_based_on == "Fixed Days":
+                    customer_row.append("TT " + str(customer_doc.credit_days) + " Days")
+                else:
+                    customer_row.append(customer_doc.credit_days_based_on)
+            else:
+                customer_row.append("")
 
             customer_data.append(customer_row)  # ADD ROW TO BE RETURNED
 
@@ -184,14 +230,18 @@ def set_account_currency(filters):
 def get_columns(filters):
     columns = [
         _("Posting Date") + ":Date:90", _("Account") + ":Link/Account:200",
-        _("Debit") + ":Float:100", _("Credit") + ":Float:100"
+       # _("Debit") + ":Float:100", _("Credit") + ":Float:100"
     ]
+    #columns = []
 
-    """if filters.get("show_in_account_currency"):
+    print "GET COLUMNS"
+    print filters
+
+    if filters.get("show_in_account_currency"):
         columns += [
-            _("Debit") + " (" + filters.account_currency + ")" + ":Float:100",
-            _("Credit") + " (" + filters.account_currency + ")" + ":Float:100"
-        ]"""
+            _("Debit") + ":Float:100",
+            _("Credit") + ":Float:100"
+        ]
 
     columns += [
         _("Voucher Type") + "::120", _("Voucher No") + ":Dynamic Link/" + _("Voucher Type") + ":160",
@@ -216,10 +266,9 @@ def get_result(filters, account_details):
 
 
 def get_gl_entries(filters):
-    #select_fields = """, sum(debit_in_account_currency) as debit_in_account_currency,
-    #	sum(credit_in_account_currency) as credit_in_account_currency""" \
-    #    if filters.get("show_in_account_currency") else ""
-    select_fields = ""
+    select_fields = """, sum(debit_in_account_currency) as debit_in_account_currency,
+    	sum(credit_in_account_currency) as credit_in_account_currency""" \
+        if filters.get("show_in_account_currency") else ""
 
     group_by_condition = "group by voucher_type, voucher_no, account, cost_center" \
         if filters.get("group_by_voucher") else "group by name"
@@ -237,30 +286,22 @@ def get_gl_entries(filters):
     	order by posting_date, account""" \
                                .format(select_fields=select_fields, conditions=get_conditions(filters),
                                        group_by_condition=group_by_condition), filters, as_dict=1)
-    for entry in gl_entries:
+    """for entry in gl_entries:
         print "INDIVIDUAL ENTRIES"
         print entry
 
-        company_currency = frappe.db.get_value("Company", filters.company, "default_currency")
-        account_currency = frappe.db.get_value(filters.party_type, filters.party, "default_currency")
-
-        #GET CURRENCY CONVERSION
-        #exchange_sql = frappe.db.sql("""SELECT exchange_rate FROM `tabCurrency Exchange`
-        #        WHERE to_currency='{0}' AND from_currency='{1}'""".format(company_currency,account_currency))
-        """print "CURRENCY EXCHANGE SQL"
-        print exchange_sql
-        if exchange_sql:
-            entry['debit'] = entry['debit']/exchange_sql[0][0]
-            entry['credit'] = entry['credit'] / exchange_sql[0][0]"""
-
         if entry['voucher_type'] == 'Sales Invoice':
             sales_invoice_doc = frappe.get_doc("Sales Invoice",entry['voucher_no'])
-            entry['debit'] = sales_invoice_doc.grand_total
-            entry['credit'] = sales_invoice_doc.grand_total
+            if entry['debit'] > 0:
+                entry['debit'] = sales_invoice_doc.grand_total
+            if entry['credit'] > 0:
+                entry['credit'] = sales_invoice_doc.grand_total
         elif entry['voucher_type'] == 'Payment Entry':
             sales_invoice_doc = frappe.get_doc("Payment Entry", entry['voucher_no'])
-            entry['debit'] = sales_invoice_doc.total_allocated_amount
-            entry['credit'] = sales_invoice_doc.total_allocated_amount
+            if entry['debit'] > 0:
+                entry['debit'] = sales_invoice_doc.total_allocated_amount
+            if entry['credit'] > 0:
+                entry['credit'] = sales_invoice_doc.total_allocated_amount"""
 
     return gl_entries
 
@@ -425,7 +466,9 @@ def get_balance_row(label, balance, balance_in_account_currency=None):
 def get_result_as_list(data, filters):
     result = []
     for d in data:
-        row = [d.get("posting_date"), d.get("account"), d.get("debit"), d.get("credit")]
+        row = [d.get("posting_date"), d.get("account")
+               # , d.get("debit"), d.get("credit")
+               ]
 
         if filters.get("show_in_account_currency"):
             row += [d.get("debit_in_account_currency"), d.get("credit_in_account_currency")]
