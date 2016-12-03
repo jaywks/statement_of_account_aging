@@ -259,8 +259,8 @@ def get_gl_entries(filters):
             entry['credit'] = sales_invoice_doc.grand_total
         elif entry['voucher_type'] == 'Payment Entry':
             sales_invoice_doc = frappe.get_doc("Payment Entry", entry['voucher_no'])
-            entry['debit'] = sales_invoice_doc.grand_total
-            entry['credit'] = sales_invoice_doc.grand_total
+            entry['debit'] = sales_invoice_doc.total_allocated_amount
+            entry['credit'] = sales_invoice_doc.total_allocated_amount
 
     return gl_entries
 
