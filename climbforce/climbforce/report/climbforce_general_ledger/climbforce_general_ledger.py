@@ -71,7 +71,7 @@ def execute(filters=None):
 
     customer_sql = frappe.db.sql("""SELECT name FROM `tabAddress` WHERE customer_name=%s LIMIT 1""",
                                  filters.get("party"))
-    print "CUSTOMER SQL"
+    print ("CUSTOMER SQL")
     print customer_sql
 
     # customer_row.append(frappe.utils.nowdate())  # #DATE

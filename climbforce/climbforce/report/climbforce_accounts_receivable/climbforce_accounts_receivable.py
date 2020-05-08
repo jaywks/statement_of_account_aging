@@ -21,7 +21,7 @@ class ReceivablePayableReport(object):
         data = self.get_data(party_naming_by, args)
         chart = self.get_chart_data(columns, data)
 
-        print "GET ACCOUNTS RECIEVABLE"
+        print ("GET ACCOUNTS RECIEVABLE")
 
         final_data = [[]]
 
