@@ -72,7 +72,7 @@ def execute(filters=None):
     customer_sql = frappe.db.sql("""SELECT name FROM `tabAddress` WHERE customer_name=%s LIMIT 1""",
                                  filters.get("party"))
     print ("CUSTOMER SQL")
-    print customer_sql
+    print (customer_sql)
 
     # customer_row.append(frappe.utils.nowdate())  # #DATE
     #dt = frappe.utils.nowdate()
@@ -219,8 +219,8 @@ def get_columns(filters):
     ]
     #columns = []
 
-    print "GET COLUMNS"
-    print filters
+    print ("GET COLUMNS")
+    print (filters)
 
     """if filters.get("show_in_account_currency"):
         columns += [
