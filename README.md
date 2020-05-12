@@ -6,3 +6,5 @@ for climbforce
 
 MIT
 
+Warning : up to v10 only
+
